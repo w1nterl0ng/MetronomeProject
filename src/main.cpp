@@ -19,7 +19,7 @@ int currentPatch = 0;
 bool showingPatchName = true;
 Settings settings;
 Patch patches[MAX_PATCHES];
-WiFiManager wifiManager(patches, settings); // Pass references to constructor
+WiFiManager wifiManager(patches, settings, display); // Pass references to constructor
 unsigned long lastActivityTime = 0;
 bool displayActive = true;
 unsigned long lastDisplayToggle = 0;

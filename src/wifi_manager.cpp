@@ -3,12 +3,13 @@
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 
-WiFiManager::WiFiManager(Patch *patches, Settings &settings) : server(80),
-                                                               wifiConnected(false),
-                                                               wifiAttempting(false),
-                                                               wifiStartAttemptTime(0),
-                                                               patches(patches),
-                                                               settings(settings)
+WiFiManager::WiFiManager(Patch *patches, Settings &settings, Display &display) : server(80),
+                                                                                 wifiConnected(false),
+                                                                                 wifiAttempting(false),
+                                                                                 wifiStartAttemptTime(0),
+                                                                                 patches(patches),
+                                                                                 settings(settings),
+                                                                                 display(display)
 {
 }
 
@@ -142,7 +143,13 @@ void WiFiManager::setupServerRoutes()
         if (!error) {
             settings.liveGigMode = doc["liveGigMode"] | false;
             settings.brightness = doc["brightness"] | 1;
+            
+            // Update the display brightness immediately
+            display.setBrightness(settings.brightness);
+            
             storage.saveSettings(settings);
             server.send(200, "application/json", "{\"status\":\"success\"}");
+        } else {
+            server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
         } });
 }

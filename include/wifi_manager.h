@@ -4,11 +4,12 @@
 #include <ESP8266WebServer.h>
 #include "config.h"
 #include "types.h"
+#include "display.h"
 
 class WiFiManager
 {
 public:
-    WiFiManager(Patch *patches, Settings &settings);
+    WiFiManager(Patch *patches, Settings &settings, Display &display);
     void begin();
     void update();
     bool isConnected() const { return wifiConnected; }
@@ -22,8 +23,7 @@ private:
 
     Patch *patches;
     Settings &settings;
+    Display &display;
 
     void setupServerRoutes();
 };
-
-extern WiFiManager wifiManager;
