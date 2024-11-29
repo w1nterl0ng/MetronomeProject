@@ -7,6 +7,7 @@
 #include "buttons.h"
 #include "storage.h"
 #include "metronome.h"
+#include "wifi_manager.h"
 
 Display display;
 Buttons buttons;
@@ -18,9 +19,10 @@ int currentPatch = 0;
 bool showingPatchName = true;
 Settings settings;
 Patch patches[MAX_PATCHES];
+WiFiManager wifiManager(patches, settings); // Pass references to constructor
 unsigned long lastActivityTime = 0;
-unsigned long lastDisplayToggle = 0; // Added for display rotation
 bool displayActive = true;
+unsigned long lastDisplayToggle = 0;
 
 void updateActivity()
 {
@@ -47,7 +49,8 @@ void handleDisplayToggle()
       lastDisplayToggle = currentTime;
       display.update(currentMode, currentPatch, patches,
                      metronome.getTempo(),
-                     showingPatchName, false,
+                     showingPatchName,
+                     wifiManager.isConnected(),
                      settings.liveGigMode);
     }
   }
@@ -64,6 +67,7 @@ void setup()
   buttons.begin();
   storage.begin();
   metronome.begin();
+  wifiManager.begin();
 
   settings = storage.loadSettings();
   storage.loadPatches(patches, MAX_PATCHES);
@@ -73,35 +77,25 @@ void setup()
   metronome.setTempo(patches[currentPatch].tempo);
 
   updateActivity();
-  lastDisplayToggle = millis(); // Initialize display toggle timer
+  lastDisplayToggle = millis();
 
   display.update(currentMode, currentPatch, patches,
                  metronome.getTempo(),
-                 showingPatchName, false,
+                 showingPatchName,
+                 wifiManager.isConnected(),
                  settings.liveGigMode);
-}
-
-// Add debug helper function
-void printState(const char *event)
-{
-  Serial.printf("\n[DEBUG] %s\n", event);
-  Serial.printf("Mode: %s\n", currentMode == PATCH_MODE ? "PATCH_MODE" : "FREE_MODE");
-  Serial.printf("Running: %s\n", metronome.isRunning() ? "true" : "false");
-  Serial.printf("Tap Mode: %s\n", metronome.isInTapMode() ? "true" : "false");
-  Serial.printf("Tempo: %d\n", metronome.getTempo());
-  Serial.println("------------------------");
 }
 
 void loop()
 {
+  wifiManager.update();
+
   if (buttons.update())
   {
     updateActivity();
 
-    // Handle Long Presses First
     if (buttons.isLeftLongPress())
     {
-      Serial.println("Left Button Long Press Detected");
       currentMode = (currentMode == PATCH_MODE) ? FREE_MODE : PATCH_MODE;
       showingPatchName = true;
       lastDisplayToggle = millis();
@@ -114,33 +108,26 @@ void loop()
       {
         metronome.stop();
       }
-      printState("After Mode Change");
     }
     else if (buttons.isRightLongPress() && currentMode == PATCH_MODE)
     {
-      Serial.println("Right Button Long Press Detected");
       currentPatch = (currentPatch + 1) % storage.getCurrentNumPatches();
       showingPatchName = true;
       lastDisplayToggle = millis();
       metronome.setTempo(patches[currentPatch].tempo);
-      printState("After Next Patch");
     }
-    // Handle Short Presses
     else if (buttons.wasLeftButtonPressed())
     {
-      Serial.println("Left Button Short Press Detected");
       if (currentMode == PATCH_MODE)
       {
         currentPatch = (currentPatch - 1 + storage.getCurrentNumPatches()) % storage.getCurrentNumPatches();
         showingPatchName = true;
         lastDisplayToggle = millis();
         metronome.setTempo(patches[currentPatch].tempo);
-        printState("After Left Button Short Press - Patch Change");
       }
     }
     else if (buttons.wasRightButtonPressed())
     {
-      Serial.println("Right Button Short Press Detected");
       if (currentMode == PATCH_MODE)
       {
         if (metronome.isRunning())
@@ -151,23 +138,22 @@ void loop()
         {
           metronome.start();
         }
-        printState("After Right Button Short Press - Patch Mode Toggle");
       }
       else
-      { // FREE_MODE
-        Serial.println("Attempting Tap in FREE_MODE");
+      {
         metronome.tap();
-        printState("After Tap Tempo");
       }
     }
 
     display.update(currentMode, currentPatch, patches,
                    metronome.getTempo(),
-                   showingPatchName, false,
+                   showingPatchName,
+                   wifiManager.isConnected(),
                    settings.liveGigMode);
 
     buttons.clearButtonStates();
   }
+
   handleDisplayToggle();
   checkDisplayTimeout();
   metronome.update(displayActive);
