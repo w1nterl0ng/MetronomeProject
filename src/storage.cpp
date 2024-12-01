@@ -12,25 +12,28 @@ void Storage::begin()
     Serial.println("Storage system initialized");
 }
 
-Settings Storage::loadSettings()
-{
-    // TEMPORARY: Force reset settings
-    Settings settings = getDefaultSettings();
-    saveSettings(settings);
-
-    Serial.printf("Settings reset - Live Gig Mode: %s, Brightness: %d\n",
-                  settings.liveGigMode ? "true" : "false",
-                  settings.brightness);
-
-    return settings;
-}
-
 Settings Storage::getDefaultSettings()
 {
     Settings settings;
-    settings.liveGigMode = false; // Explicitly false
-    settings.brightness = 0;      // Medium brightness
+    settings.brightness = 8; // Medium brightness
     settings.checksum = SETTINGS_CHECKSUM;
+    return settings;
+}
+
+Settings Storage::loadSettings()
+{
+    Settings settings;
+    EEPROM.get(SETTINGS_ADDR, settings);
+
+    if (settings.checksum != SETTINGS_CHECKSUM)
+    {
+        Serial.println("Invalid settings, initializing defaults");
+        settings = getDefaultSettings();
+        saveSettings(settings);
+    }
+
+    Serial.printf("Loaded settings - Brightness: %d\n", settings.brightness);
+
     return settings;
 }
 
@@ -42,7 +45,6 @@ void Storage::saveSettings(const Settings &settings)
 
 bool Storage::validatePatch(const Patch &patch)
 {
-    // Check if patch name contains valid ASCII characters
     for (int i = 0; i < 4; i++)
     {
         if (patch.name[i] < 32 || patch.name[i] > 126)
@@ -51,7 +53,6 @@ bool Storage::validatePatch(const Patch &patch)
         }
     }
 
-    // Check if tempo is within valid range
     if (patch.tempo < 40 || patch.tempo > 240)
     {
         return false;
@@ -62,7 +63,6 @@ bool Storage::validatePatch(const Patch &patch)
 
 void Storage::initializeDefaultPatches(Patch *patches)
 {
-    // Initialize default patches
     strncpy(patches[0].name, "STOK", 5);
     patches[0].tempo = 110;
 
@@ -72,7 +72,6 @@ void Storage::initializeDefaultPatches(Patch *patches)
     strncpy(patches[2].name, "SHIP", 5);
     patches[2].tempo = 118;
 
-    // Clear remaining patches
     for (int i = 3; i < MAX_PATCHES; i++)
     {
         patches[i].name[0] = '\0';
@@ -85,7 +84,7 @@ void Storage::initializeDefaultPatches(Patch *patches)
 
 void Storage::loadPatches(Patch *patches, int maxPatches)
 {
-    EEPROM.get(PATCHES_ADDR, patches[0]); // Load first patch to check validity
+    EEPROM.get(PATCHES_ADDR, patches[0]);
 
     if (!validatePatch(patches[0]))
     {
@@ -94,13 +93,11 @@ void Storage::loadPatches(Patch *patches, int maxPatches)
         return;
     }
 
-    // Load the rest of the patches
     for (int i = 1; i < maxPatches; i++)
     {
         EEPROM.get(PATCHES_ADDR + (i * sizeof(Patch)), patches[i]);
     }
 
-    // Count number of valid patches
     numPatches = 0;
     for (int i = 0; i < maxPatches; i++)
     {
@@ -115,10 +112,29 @@ void Storage::loadPatches(Patch *patches, int maxPatches)
 
 void Storage::savePatches(const Patch *patches, int maxPatches)
 {
+    Serial.println("Storage: Saving patches to EEPROM");
     for (int i = 0; i < maxPatches; i++)
     {
         EEPROM.put(PATCHES_ADDR + (i * sizeof(Patch)), patches[i]);
     }
-    EEPROM.commit();
-    Serial.println("Patches saved to EEPROM");
+    if (EEPROM.commit())
+    {
+        Serial.println("Storage: EEPROM commit successful");
+    }
+    else
+    {
+        Serial.println("Storage: EEPROM commit failed!");
+    }
+}
+
+void Storage::savePatchCount(int count)
+{
+    Serial.printf("Storage: Updating patch count from %d to %d\n", numPatches, count);
+    numPatches = count;
+}
+
+int Storage::getCurrentNumPatches() const
+{
+    Serial.printf("Storage: Current patch count is %d\n", numPatches);
+    return numPatches;
 }

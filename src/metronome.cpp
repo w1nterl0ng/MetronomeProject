@@ -62,33 +62,36 @@ void Metronome::update(bool displayActive)
 {
     unsigned long currentTime = millis();
 
-    // Check for tap tempo timeout
     if (tapMode && (currentTime - lastTapTime > TAP_TIMEOUT))
     {
         tapMode = false;
         running = true;
-        Serial.println("Tap mode timeout, starting metronome"); // Debug output
     }
 
-    // Handle beat generation
     if (!running || (liveGigMode && !displayActive))
     {
         digitalWrite(LED_PIN, LOW);
         return;
     }
 
-    generateBeat();
+    generateBeat(displayActive);
 }
 
-void Metronome::generateBeat()
+void Metronome::generateBeat(bool displayActive)
 {
+    if (!displayActive && liveGigMode)
+    {
+        digitalWrite(LED_PIN, LOW);
+        return;
+    }
+
     unsigned long currentTime = millis();
     unsigned long interval = 60000 / tempo;
 
     if (currentTime - lastBeat >= interval)
     {
         digitalWrite(LED_PIN, HIGH);
-        delayMicroseconds(50000); // 50ms pulse
+        delayMicroseconds(50000);
         digitalWrite(LED_PIN, LOW);
         lastBeat = currentTime;
     }

@@ -14,12 +14,13 @@ public:
     // Settings management
     Settings loadSettings();
     void saveSettings(const Settings &settings);
-    Settings getDefaultSettings(); // New method
+    Settings getDefaultSettings();
 
     // Patch management
     void loadPatches(Patch *patches, int maxPatches);
     void savePatches(const Patch *patches, int maxPatches);
-    int getCurrentNumPatches() const { return numPatches; }
+    int getCurrentNumPatches() const;
+    void savePatchCount(int count);
 
 private:
     int numPatches;
@@ -27,4 +28,4 @@ private:
     void initializeDefaultPatches(Patch *patches);
 };
 
-extern Storage storage; // Global storage instance
+extern Storage storage;

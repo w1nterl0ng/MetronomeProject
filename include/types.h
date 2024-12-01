@@ -8,10 +8,9 @@ enum Mode
     FREE_MODE
 };
 
-// Settings structure
+// Settings structure - removed liveGigMode
 struct Settings
 {
-    bool liveGigMode;
     uint8_t brightness;
     uint32_t checksum;
 };

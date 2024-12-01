@@ -29,6 +29,20 @@ body {
     border-radius: 4px;
 }
 
+.patch:hover {
+    background: #f0f0f0;
+}
+
+.patch-handle {
+    cursor: move;
+    padding: 5px;
+    color: #666;
+}
+
+.material-icons {
+    font-size: 20px;
+}
+
 input, button {
     padding: 8px;
     border: 1px solid #ddd;
@@ -51,5 +65,17 @@ button:hover {
     background: #45a049;
 }
 
-.error { color: #f44336; }
-.success { color: #4CAF50; }
+.delete-btn {
+    background: #f44336;
+}
+
+.delete-btn:hover {
+    background: #da190b;
+}
+
+.error { color: #f44336; margin: 10px 0; }
+.success { color: #4CAF50; margin: 10px 0; }
+
+.dragging {
+    opacity: 0.5;
+}

@@ -7,24 +7,14 @@ class Metronome
 public:
     Metronome();
     void begin();
-
-    // Core metronome control
+    void update(bool displayActive);
     void start();
     void stop();
-    bool isRunning() const { return running; }
-
-    // Tempo management
+    void tap();
     void setTempo(int newTempo);
     int getTempo() const { return tempo; }
-
-    // Tap tempo functionality
-    void tap();
+    bool isRunning() const { return running; }
     bool isInTapMode() const { return tapMode; }
-
-    // Main update function - call this in loop()
-    void update(bool displayActive = true);
-
-    // Configuration
     void setLiveGigMode(bool enabled) { liveGigMode = enabled; }
 
 private:
@@ -35,6 +25,5 @@ private:
     unsigned long lastBeat;
     unsigned long lastTapTime;
 
-    void generateBeat();
-    void updateTapTempo();
+    void generateBeat(bool displayActive);
 };
