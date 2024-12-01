@@ -24,23 +24,38 @@ unsigned long lastActivityTime = 0;
 bool displayActive = true;
 unsigned long lastDisplayToggle = 0;
 
-bool isLiveGigMode()
-{
-  static bool lastState = false; // Track state changes
-  bool currentState = digitalRead(LIVE_GIG_PIN) == LOW;
-
-  if (currentState != lastState)
-  {
-    Serial.printf("Live Gig Mode changed to: %s\n", currentState ? "ON" : "OFF");
-    lastState = currentState;
-  }
-  return currentState;
-}
-
 void updateActivity()
 {
   lastActivityTime = millis();
   displayActive = true;
+}
+
+bool isLiveGigMode()
+{
+  static bool lastState = false;
+  bool currentState = digitalRead(LIVE_GIG_PIN) == LOW;
+
+  // If state changed, record the time
+  if (currentState != lastState)
+  {
+    Serial.printf("Live Gig Mode changed to: %s\n", currentState ? "ON" : "OFF");
+    lastState = currentState;
+
+    if (currentState)
+    {
+      // Force a clean state when entering live gig mode
+      displayActive = true;
+      metronome.start();
+      updateActivity();
+    }
+    else
+    {
+      // Clean up when exiting live gig mode
+      metronome.stop();
+    }
+  }
+
+  return currentState;
 }
 
 void checkDisplayTimeout()
@@ -78,6 +93,26 @@ void setup()
   Serial.begin(115200);
   Serial.println("\nStarting Metronome...");
 
+  // Add emergency recovery check
+  pinMode(LIVE_GIG_PIN, INPUT_PULLUP);
+  pinMode(LEFT_SWITCH_PIN, INPUT_PULLUP);
+  pinMode(RIGHT_SWITCH_PIN, INPUT_PULLUP);
+
+  // If both buttons are held during power-up, reset everything
+  if (digitalRead(LEFT_SWITCH_PIN) == LOW && digitalRead(RIGHT_SWITCH_PIN) == LOW)
+  {
+    Serial.println("Emergency reset triggered!");
+    EEPROM.begin(512);
+    for (int i = 0; i < 512; i++)
+    {
+      EEPROM.write(i, 0xFF);
+    }
+    EEPROM.commit();
+    Serial.println("EEPROM cleared");
+    delay(1000);
+    ESP.restart();
+  }
+
   Wire.begin();
 
   // Initialize WiFi first
@@ -89,6 +124,9 @@ void setup()
   buttons.begin();
   storage.begin();
   metronome.begin();
+
+  // Add watchdog
+  ESP.wdtEnable(WDTO_8S);
 
   settings = storage.loadSettings();
   storage.loadPatches(patches, MAX_PATCHES);
@@ -109,6 +147,9 @@ void setup()
 
 void loop()
 {
+  // Reset watchdog timer
+  ESP.wdtFeed();
+
   wifiManager.update();
 
   // Update live gig mode from switch
@@ -116,28 +157,32 @@ void loop()
 
   if (buttons.update())
   {
-    updateActivity();
+    updateActivity(); // Reset activity timer
 
     if (buttons.isLeftLongPress())
     {
-      currentMode = (currentMode == PATCH_MODE) ? FREE_MODE : PATCH_MODE;
-      showingPatchName = true;
-      lastDisplayToggle = millis();
+      if (!isLiveGigMode())
+      { // Only allow mode change if not in live gig mode
+        currentMode = (currentMode == PATCH_MODE) ? FREE_MODE : PATCH_MODE;
+        showingPatchName = true;
+        lastDisplayToggle = millis();
 
-      if (currentMode == FREE_MODE)
-      {
-        metronome.start();
-      }
-      else
-      {
-        metronome.stop();
+        if (currentMode == FREE_MODE)
+        {
+          metronome.start();
+        }
+        else
+        {
+          metronome.stop();
+        }
       }
     }
     else if (buttons.isRightLongPress() && currentMode == PATCH_MODE)
     {
       if (isLiveGigMode())
       {
-        updateActivity();
+        updateActivity(); // Reset timeout
+        Serial.println("Live Gig timeout reset");
       }
       else
       {
