@@ -9,7 +9,7 @@ Storage::Storage() : numPatches(3)
 void Storage::begin()
 {
     EEPROM.begin(512);
-    Serial.println("Storage system initialized");
+    DEBUG_PRINTLN("Storage system initialized");
 }
 
 Settings Storage::getDefaultSettings()
@@ -27,12 +27,12 @@ Settings Storage::loadSettings()
 
     if (settings.checksum != SETTINGS_CHECKSUM)
     {
-        Serial.println("Invalid settings, initializing defaults");
+        DEBUG_PRINTLN("Invalid settings, initializing defaults");
         settings = getDefaultSettings();
         saveSettings(settings);
     }
 
-    Serial.printf("Loaded settings - Brightness: %d\n", settings.brightness);
+    DEBUG_PRINTF("Loaded settings - Brightness: %d\n", settings.brightness);
 
     return settings;
 }
@@ -88,7 +88,7 @@ void Storage::loadPatches(Patch *patches, int maxPatches)
 
     if (!validatePatch(patches[0]))
     {
-        Serial.println("Invalid patches found, initializing defaults");
+        DEBUG_PRINTLN("Invalid patches found, initializing defaults");
         initializeDefaultPatches(patches);
         return;
     }
@@ -107,34 +107,34 @@ void Storage::loadPatches(Patch *patches, int maxPatches)
         }
     }
 
-    Serial.printf("Loaded %d patches\n", numPatches);
+    DEBUG_PRINTF("Loaded %d patches\n", numPatches);
 }
 
 void Storage::savePatches(const Patch *patches, int maxPatches)
 {
-    Serial.println("Storage: Saving patches to EEPROM");
+    DEBUG_PRINTLN("Storage: Saving patches to EEPROM");
     for (int i = 0; i < maxPatches; i++)
     {
         EEPROM.put(PATCHES_ADDR + (i * sizeof(Patch)), patches[i]);
     }
     if (EEPROM.commit())
     {
-        Serial.println("Storage: EEPROM commit successful");
+        DEBUG_PRINTLN("Storage: EEPROM commit successful");
     }
     else
     {
-        Serial.println("Storage: EEPROM commit failed!");
+        DEBUG_PRINTLN("Storage: EEPROM commit failed!");
     }
 }
 
 void Storage::savePatchCount(int count)
 {
-    Serial.printf("Storage: Updating patch count from %d to %d\n", numPatches, count);
+    DEBUG_PRINTF("Storage: Updating patch count from %d to %d\n", numPatches, count);
     numPatches = count;
 }
 
 int Storage::getCurrentNumPatches() const
 {
-    Serial.printf("Storage: Current patch count is %d\n", numPatches);
+    DEBUG_PRINTF("Storage: Current patch count is %d\n", numPatches);
     return numPatches;
 }

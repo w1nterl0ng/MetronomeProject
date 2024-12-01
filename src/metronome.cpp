@@ -52,7 +52,7 @@ void Metronome::tap()
         if (newTempo >= 40 && newTempo <= 240)
         { // Validate tempo range
             tempo = newTempo;
-            Serial.printf("Tap tempo: %d BPM\n", tempo); // Debug output
+            DEBUG_PRINTF("Tap tempo: %d BPM\n", tempo); // Debug output
         }
     }
     lastTapTime = currentTime;

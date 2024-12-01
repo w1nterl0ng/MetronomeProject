@@ -15,7 +15,7 @@
 #define LEFT_SWITCH_PIN 14  // D5
 #define RIGHT_SWITCH_PIN 12 // D6
 #define LED_PIN 13          // D7
-#define LIVE_GIG_PIN 2      // D4 - Add new pin for live gig switch
+#define LIVE_GIG_PIN 16     // D0 - Add new pin for live gig switch
 
 // Timing Constants
 #define HOLD_THRESHOLD 1000      // Long press threshold in ms

@@ -40,7 +40,7 @@ bool Buttons::handleButton(Button &button, bool &pressedState, bool &longPressTr
 
     if (reading != button.lastState)
     {
-        Serial.printf("Pin %d state changed to: %d\n", button.pin, reading);
+        DEBUG_PRINTF("Pin %d state changed to: %d\n", button.pin, reading);
         button.lastDebounceTime = currentTime;
     }
 
@@ -52,7 +52,7 @@ bool Buttons::handleButton(Button &button, bool &pressedState, bool &longPressTr
 
             if (button.currentState == LOW)
             { // Button pressed
-                Serial.printf("Button on pin %d pressed\n", button.pin);
+                DEBUG_PRINTF("Button on pin %d pressed\n", button.pin);
                 button.pressStartTime = currentTime;
                 button.isLongPress = false;
                 longPressTriggered = false;
@@ -64,7 +64,7 @@ bool Buttons::handleButton(Button &button, bool &pressedState, bool &longPressTr
                 {
                     pressedState = true;
                     stateChanged = true;
-                    Serial.printf("Short press detected on pin %d\n", button.pin);
+                    DEBUG_PRINTF("Short press detected on pin %d\n", button.pin);
                 }
             }
         }
@@ -74,7 +74,7 @@ bool Buttons::handleButton(Button &button, bool &pressedState, bool &longPressTr
             button.isLongPress = true;
             longPressTriggered = true;
             stateChanged = true;
-            Serial.printf("Long press detected on pin %d\n", button.pin);
+            DEBUG_PRINTF("Long press detected on pin %d\n", button.pin);
         }
     }
 

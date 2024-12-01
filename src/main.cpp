@@ -38,7 +38,7 @@ bool isLiveGigMode()
   // If state changed, record the time
   if (currentState != lastState)
   {
-    Serial.printf("Live Gig Mode changed to: %s\n", currentState ? "ON" : "OFF");
+    DEBUG_PRINTF("Live Gig Mode changed to: %s\n", currentState ? "ON" : "OFF");
     lastState = currentState;
 
     if (currentState)
@@ -65,7 +65,7 @@ void checkDisplayTimeout()
     if (millis() - lastActivityTime > LIVE_GIG_TIMEOUT)
     {
       displayActive = false;
-      Serial.println("Display timeout - turning off");
+      DEBUG_PRINTLN("Display timeout - turning off");
     }
   }
 }
@@ -91,7 +91,7 @@ void handleDisplayToggle()
 void setup()
 {
   Serial.begin(115200);
-  Serial.println("\nStarting Metronome...");
+  DEBUG_PRINTLN("\nStarting Metronome...");
 
   // Add emergency recovery check
   pinMode(LIVE_GIG_PIN, INPUT_PULLUP);
@@ -101,14 +101,14 @@ void setup()
   // If both buttons are held during power-up, reset everything
   if (digitalRead(LEFT_SWITCH_PIN) == LOW && digitalRead(RIGHT_SWITCH_PIN) == LOW)
   {
-    Serial.println("Emergency reset triggered!");
+    DEBUG_PRINTLN("Emergency reset triggered!");
     EEPROM.begin(512);
     for (int i = 0; i < 512; i++)
     {
       EEPROM.write(i, 0xFF);
     }
     EEPROM.commit();
-    Serial.println("EEPROM cleared");
+    DEBUG_PRINTLN("EEPROM cleared");
     delay(1000);
     ESP.restart();
   }
@@ -182,7 +182,7 @@ void loop()
       if (isLiveGigMode())
       {
         updateActivity(); // Reset timeout
-        Serial.println("Live Gig timeout reset");
+        DEBUG_PRINTLN("Live Gig timeout reset");
       }
       else
       {

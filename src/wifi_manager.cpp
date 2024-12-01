@@ -1,5 +1,6 @@
 #include "wifi_manager.h"
 #include "storage.h"
+#include "debug.h"
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 
@@ -28,11 +29,11 @@ void WiFiManager::begin()
 {
     if (!LittleFS.begin())
     {
-        Serial.println("Error mounting LittleFS");
+        DEBUG_PRINTLN("Error mounting LittleFS");
         return;
     }
 
-    Serial.print("Starting WiFi connection attempt...");
+    DEBUG_PRINT("Starting WiFi connection attempt...");
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     wifiStartAttemptTime = millis();
     wifiAttempting = true;
@@ -44,26 +45,26 @@ void WiFiManager::begin()
     server.onNotFound([this]()
                       {
         String path = server.uri();
-        Serial.print("Requested path: ");
-        Serial.println(path);
+        DEBUG_PRINT("Requested path: ");
+        DEBUG_PRINTLN(path);
         
         if (path.endsWith("/")) {
             path += "index.html";
-            Serial.println("Adding index.html to path");
+            DEBUG_PRINTLN("Adding index.html to path");
         }
         
-        Serial.print("Looking for file: ");
-        Serial.println(path);
+        DEBUG_PRINT("Looking for file: ");
+        DEBUG_PRINTLN(path);
         
         if (LittleFS.exists(path)) {
-            Serial.println("File exists!");
+            DEBUG_PRINTLN("File exists!");
             File file = LittleFS.open(path, "r");
             server.streamFile(file, getContentType(path));
             file.close();
             return;
         }
         
-        Serial.println("File not found!");
+        DEBUG_PRINTLN("File not found!");
         server.send(404, "text/plain", "File Not Found"); });
 }
 
@@ -75,24 +76,23 @@ void WiFiManager::update()
         {
             wifiConnected = true;
             wifiAttempting = false;
-            Serial.println("\nWiFi Connected!");
-            Serial.print("IP address: ");
-            Serial.println(WiFi.localIP());
+            DEBUG_PRINTLN("\nWiFi Connected!");
+            DEBUG_PRINTF("IP address: %s\n", WiFi.localIP().toString().c_str());
 
             server.begin();
-            Serial.println("Web server started");
+            DEBUG_PRINTLN("Web server started");
         }
         else if (millis() - wifiStartAttemptTime > WIFI_TIMEOUT)
         {
             wifiAttempting = false;
             wifiConnected = false;
             WiFi.disconnect(true);
-            Serial.println("\nWiFi connection timed out. Running in offline mode.");
+            DEBUG_PRINTLN("\nWiFi connection timed out. Running in offline mode.");
         }
     }
     else if (!wifiConnected && (WiFi.status() != WL_CONNECTED))
     {
-        Serial.println("\nLost WiFi connection. Attempting to reconnect...");
+        DEBUG_PRINTLN("\nLost WiFi connection. Attempting to reconnect...");
         WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
         wifiStartAttemptTime = millis();
         wifiAttempting = true;
@@ -102,7 +102,7 @@ void WiFiManager::update()
     {
         if (WiFi.status() != WL_CONNECTED)
         {
-            Serial.println("WiFi connection lost!");
+            DEBUG_PRINTLN("WiFi connection lost!");
             wifiConnected = false;
         }
         else
@@ -133,7 +133,7 @@ void WiFiManager::setupServerRoutes()
     // Create new patch
     server.on("/api/patches", HTTP_POST, [this]()
               {
-        Serial.println("POST /api/patches received");
+        DEBUG_PRINTLN("POST /api/patches received");
         
         if (server.hasArg("plain")) {
             StaticJsonDocument<200> doc;
@@ -141,13 +141,13 @@ void WiFiManager::setupServerRoutes()
             
             if (!error) {
                 int currentCount = storage.getCurrentNumPatches();
-                Serial.printf("Current patch count before add: %d\n", currentCount);
+                DEBUG_PRINTF("Current patch count before add: %d\n", currentCount);
                 
                 if (currentCount < MAX_PATCHES) {
                     const char* newName = doc["name"] | "";
                     int newTempo = doc["tempo"] | 120;
                     
-                    Serial.printf("Adding new patch: name='%s', tempo=%d at index %d\n", 
+                    DEBUG_PRINTF("Adding new patch: name='%s', tempo=%d at index %d\n", 
                                 newName, newTempo, currentCount);
                     
                     strlcpy(patches[currentCount].name, newName, sizeof(patches[currentCount].name));
@@ -156,15 +156,15 @@ void WiFiManager::setupServerRoutes()
                     storage.savePatchCount(currentCount + 1);
                     storage.savePatches(patches, MAX_PATCHES);
                     
-                    Serial.printf("New patch count: %d\n", storage.getCurrentNumPatches());
+                    DEBUG_PRINTF("New patch count: %d\n", storage.getCurrentNumPatches());
                     
                     server.send(200, "application/json", "{\"status\":\"success\"}");
                 } else {
-                    Serial.println("Error: Maximum patches reached");
+                    DEBUG_PRINTLN("Error: Maximum patches reached");
                     server.send(400, "application/json", "{\"error\":\"Maximum number of patches reached\"}");
                 }
             } else {
-                Serial.println("Error: Invalid JSON");
+                DEBUG_PRINTLN("Error: Invalid JSON");
                 server.send(400, "application/json", "{\"error\":\"Invalid JSON\"}");
             }
         } });
@@ -211,7 +211,7 @@ void WiFiManager::setupServerRoutes()
                 storage.savePatchCount(numPatches - 1);
                 storage.savePatches(patches, MAX_PATCHES);
 
-                Serial.printf("Deleted patch at index %d, new patch count: %d\n", 
+                DEBUG_PRINTF("Deleted patch at index %d, new patch count: %d\n", 
                             index, storage.getCurrentNumPatches());
                 
                 server.send(200, "application/json", "{\"status\":\"success\"}");
