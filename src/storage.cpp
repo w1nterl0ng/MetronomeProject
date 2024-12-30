@@ -15,7 +15,7 @@ void Storage::begin()
 Settings Storage::getDefaultSettings()
 {
     Settings settings;
-    settings.brightness = 8; // Medium brightness
+    settings.brightness = 1; // Low brightness
     settings.checksum = SETTINGS_CHECKSUM;
     return settings;
 }
@@ -63,14 +63,14 @@ bool Storage::validatePatch(const Patch &patch)
 
 void Storage::initializeDefaultPatches(Patch *patches)
 {
-    strncpy(patches[0].name, "STOK", 5);
-    patches[0].tempo = 110;
+    strncpy(patches[0].name, "NINT", 5);
+    patches[0].tempo = 90;
 
-    strncpy(patches[1].name, "CRY ", 5);
-    patches[1].tempo = 125;
+    strncpy(patches[1].name, "HUND", 5);
+    patches[1].tempo = 100;
 
-    strncpy(patches[2].name, "SHIP", 5);
-    patches[2].tempo = 118;
+    strncpy(patches[2].name, "TWTY", 5);
+    patches[2].tempo = 120;
 
     for (int i = 3; i < MAX_PATCHES; i++)
     {
