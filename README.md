@@ -1,4 +1,8 @@
 # ESP8266 Stage Metronome System
+
+## Proof of concept video
+https://youtu.be/pr7YFnc9cfY?si=y8HWWRvrHU0zolZW
+
 ## User Manual
 
 ### Overview
