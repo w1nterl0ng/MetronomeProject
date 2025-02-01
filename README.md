@@ -1,5 +1,7 @@
 # ESP8266 Stage Metronome System
 
+![pedal turned off](./img-pedal-off.png)
+
 ## Proof of concept video
 
 https://youtu.be/pr7YFnc9cfY?si=y8HWWRvrHU0zolZW
